@@ -178,27 +178,71 @@ const timer = {
         view.home();
     },
 };
+
 function printLog() {
-    document.getElementById('printTableContent').innerHTML = "";
-    if (localStorage.getItem("drivingLog") != null) {
-        var log = JSON.parse(localStorage.getItem("drivingLog"));
-    } else {
+    if (localStorage.getItem("drivingLog") == null) {
         snackbar.labelText = 'There isn\'t anything on your log. You can\'t print it.';
         snackbar.open();
         return "error";
     }
-    for (var i = 0; i < log.length; i++) {
-        document.getElementById('printTableContent').innerHTML += '<tr class="mdc-data-table__row"><th class="mdc-data-table__cell" scope="row">' + log[i].time.join(':') + '</th><th class="mdc-data-table__cell" scope="row">' + (new Date(log[i].date)).toLocaleDateString() + '</th><td class="mdc-data-table__cell" id="' + i + 'night"></td><td class="mdc-data-table__cell mdc-data-table__cell--numeric">' + log[i].skills.length + '</td><td class="mdc-data-table__cell">' + log[i].comment + '</td></tr>';
-        if (log[i].night) {
-            document.getElementById(i + 'night').innerHTML = "Yes";
-        } else {
-            document.getElementById(i + 'night').innerHTML = "No";
-        }
-    }
+    var log = JSON.parse(localStorage.getItem("drivingLog"));
+    var hours = JSON.parse(localStorage.getItem('hours'));
     var totalHours = getTotalTime()[0];
     var nightHours = getTotalTime()[1];
-    document.getElementById('printTableContent').innerHTML += "<tr class='mdc-data-table__row table-row__total'><th class='mdc-data-table__cell table-text__total' scope='row'><i class='material-icons align-bottom'>directions_car</i> Total Driving Time: " + timePrintLayout(totalHours).join(':') + "</tr><th class='mdc-data-table__cell table-text__total' scope='row'><i class='material-icons align-bottom'>nights_stay</i> Total Night Driving Time: " + timePrintLayout(nightHours).join(':') + "</th></tr>";
-    window.print();
+
+    var rows = '';
+    for (var i = 0; i < log.length; i++) {
+        var entry = log[i];
+        var skillNames = entry.skills.map(function(id) {
+            var match = SKILLS.find(function(s) { return s.id === id; });
+            return match ? match.name : id;
+        }).join(', ') || '—';
+        rows += '<tr>' +
+            '<td>' + entry.time.join(':') + '</td>' +
+            '<td>' + (new Date(entry.date)).toLocaleDateString() + '</td>' +
+            '<td>' + (entry.night ? 'Yes' : 'No') + '</td>' +
+            '<td>' + skillNames + '</td>' +
+            '<td>' + (entry.comment || '—') + '</td>' +
+            '</tr>';
+    }
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Driving Log</title>' +
+        '<style>' +
+        'body{font-family:sans-serif;padding:20px;max-width:900px;margin:0 auto}' +
+        'h1{font-size:1.5em;margin-bottom:4px}' +
+        '.summary{margin-bottom:16px;font-size:0.95em;color:#444}' +
+        'table{border-collapse:collapse;width:100%;font-size:0.9em}' +
+        'th,td{border:1px solid #bbb;padding:7px 10px;text-align:left}' +
+        'thead tr{background:#1a1a1a;color:#fff}' +
+        'tr:nth-child(even){background:#f4f4f4}' +
+        '.totals td{font-weight:bold;background:#e8e8e8}' +
+        'button{margin-bottom:16px;padding:8px 16px;font-size:1em;cursor:pointer}' +
+        '@media print{button{display:none}}' +
+        '</style></head><body>' +
+        '<h1>Driving Log</h1>' +
+        '<div class="summary">' +
+        'Total: <strong>' + timePrintLayout(totalHours).join(':') + '</strong> of <strong>' + hours[0] + 'h</strong> required &nbsp;|&nbsp; ' +
+        'Night: <strong>' + timePrintLayout(nightHours).join(':') + '</strong> of <strong>' + hours[1] + 'h</strong> required' +
+        '</div>' +
+        '<button onclick="window.print()">Print / Save as PDF</button>' +
+        '<table><thead><tr>' +
+        '<th>Driving Time</th><th>Date</th><th>At Night</th><th>Skills Practiced</th><th>Comment</th>' +
+        '</tr></thead><tbody>' +
+        rows +
+        '<tr class="totals"><td colspan="5">' +
+        'Total Driving: ' + timePrintLayout(totalHours).join(':') +
+        ' &nbsp;|&nbsp; Total Night Driving: ' + timePrintLayout(nightHours).join(':') +
+        '</td></tr>' +
+        '</tbody></table></body></html>';
+
+    var blob = new Blob([html], {type: 'text/html'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'driving-log.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 const DRIVING_TIPS = ["Turn on Do Not Disturb to reduce distractions on the road.", "Try turning off driver assist features to become less dependent on these features.", "Stop driving if you feel tired", "Remember to buckle up!", "Feel free to exit the app. Your timer will stay here.", "Remember, you should look over your shoulder and fully move into a non-protected bike lane before turning right.", "Remember, your car is a wrecking ball on wheels. Control it wisely, safely, and responsibly."];
 function getTotalTime() {
