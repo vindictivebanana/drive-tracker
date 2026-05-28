@@ -1,6 +1,8 @@
-![Icon](https://isakw2004.github.io/drive-tracker/assets/icons/icon_192.png "Icon")
+![Icon](assets/icons/icon_192.png "Icon")
 
-# [Driving Log](https://isakw2004.github.io/drive-tracker/ "# Driving Log")
+# [Driving Log](https://drive.lehn.dev "# Driving Log")
+
+_Forked from isakW2004_
 
 This is a simple and installable Progressive Web App (PWA) for tracking student driving hours. It tracks total hours, night hours, and essential skills practiced.
 
