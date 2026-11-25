@@ -4,19 +4,46 @@ let currentTime;
 let currentNight;
 let currentMS;
 let predictedTime;
+const DEFAULT_DAY_START = '05:00';
+const DEFAULT_NIGHT_START = '19:00';
+
+function isValidClockTime(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+function clockTimeToMinutes(value) {
+    const [hours, minutes] = value.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+function getNightCutoffs() {
+    const dayStart = localStorage.getItem('dayStartTime') || DEFAULT_DAY_START;
+    const nightStart = localStorage.getItem('nightStartTime') || DEFAULT_NIGHT_START;
+    if (!isValidClockTime(dayStart) || !isValidClockTime(nightStart) ||
+        clockTimeToMinutes(dayStart) >= clockTimeToMinutes(nightStart)) {
+        return {dayStart: DEFAULT_DAY_START, nightStart: DEFAULT_NIGHT_START};
+    }
+    return {dayStart, nightStart};
+}
+
+function getPredictedTime() {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const cutoffs = getNightCutoffs();
+    if (currentTime < clockTimeToMinutes(cutoffs.dayStart) || currentTime >= clockTimeToMinutes(cutoffs.nightStart)) {
+        return 'night';
+    } else {
+        return 'day';
+    }
+}
+
 class TabManager {
     start() {
         this._switchTabs('start-tab');
         fabIcon.innerText = 'play_arrow';
         document.getElementById('share').hidden = true;
         document.getElementById('closeButton').hidden = false;
-        const hour = new Date().getHours();
-        if (hour < 5 || hour >=21) {
-            predictedTime = 'night';
-        } else {
-            predictedTime = 'day';
-        }
-
+        predictedTime = getPredictedTime();
         if (timeChips.selectedChipIds.indexOf(predictedTime) == -1) {
             document.getElementById(predictedTime).click();
         }
@@ -63,12 +90,7 @@ class TabManager {
         document.getElementById('share').hidden = false;
         document.getElementById('closeButton').hidden = true;
         fabIcon.innerHTML = 'play_arrow';
-        const hour = new Date().getHours();
-        if (hour < 5 || hour > 21) {
-            predictedTime = 'night';
-        } else {
-            predictedTime = 'day';
-        }
+        predictedTime = getPredictedTime();
         if (timeChips.selectedChipIds.indexOf(predictedTime) == -1) {
             document.getElementById(predictedTime).click();
         }
@@ -571,6 +593,20 @@ function toggleAlwaysNight() {
         darkModeSwitch.checked = true;
         document.querySelector('html').classList.add('night');
     }
+}
+
+function saveNightCutoffs() {
+    const dayStart = document.getElementById('dayStartTime').value;
+    const nightStart = document.getElementById('nightStartTime').value;
+    const message = document.getElementById('nightCutoffError');
+    if (!isValidClockTime(dayStart) || !isValidClockTime(nightStart) ||
+        clockTimeToMinutes(dayStart) >= clockTimeToMinutes(nightStart)) {
+        message.textContent = 'Day must start before night begins.';
+        return;
+    }
+    localStorage.setItem('dayStartTime', dayStart);
+    localStorage.setItem('nightStartTime', nightStart);
+    message.textContent = '';
 }
 
 function _generateSkillChips() {

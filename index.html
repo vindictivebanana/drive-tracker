@@ -353,6 +353,21 @@
               </div>
             </div>
           </li>
+          <li class="mdc-list-item" style="height:auto; padding-top:12px; padding-bottom:12px;">
+            <span class="mdc-list-item__text">
+              <span class="mdc-list-item__primary-text">Automatic Day/Night Selection</span>
+              <span class="mdc-list-item__secondary-text">Choose when day starts and night begins</span>
+              <span style="display:flex; gap:16px; margin-top:12px;">
+                <label for="dayStartTime">Day starts
+                  <input id="dayStartTime" type="time" onchange="saveNightCutoffs()">
+                </label>
+                <label for="nightStartTime">Night begins
+                  <input id="nightStartTime" type="time" onchange="saveNightCutoffs()">
+                </label>
+              </span>
+              <small id="nightCutoffError" role="alert" style="color:#b00020;"></small>
+            </span>
+          </li>
           <a class="mdc-list-item" tabindex="0" onclick="exportData(this)">
             <span class="mdc-list-item__ripple"></span>
             <span class="mdc-list-item__text">
@@ -448,6 +463,9 @@
     });
   }
   const darkModeSwitch = new mdc.switchControl.MDCSwitch(document.getElementById('settings').querySelector('.settings-switch'));
+  const nightCutoffs = getNightCutoffs();
+  document.getElementById('dayStartTime').value = nightCutoffs.dayStart;
+  document.getElementById('nightStartTime').value = nightCutoffs.nightStart;
   if (localStorage.getItem('darkMode') == "true") {
     darkModeSwitch.checked = true
     document.querySelector('html').classList.add("night")
