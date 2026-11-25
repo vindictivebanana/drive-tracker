@@ -9,11 +9,9 @@ class TabManager {
         fabIcon.innerText = 'play_arrow';
         document.getElementById('share').hidden = true;
         document.getElementById('closeButton').hidden = false;
-        if ((new Date).getHours < 5 || (new Date).getHours > 21) {
-            var predictedTime = 'night';
-        } else {
-            var predictedTime = 'day';
-        }
+        const hour = new Date().getHours();
+        const predictedTime = (hour < 5 || hour >= 16) ? 'night' : 'day';
+
         if (timeChips.selectedChipIds.indexOf(predictedTime) == -1) {
             document.getElementById(predictedTime).click();
         }
@@ -198,11 +196,11 @@ function printLog() {
             return match ? match.name : id;
         }).join(', ') || '—';
         rows += '<tr>' +
-            '<td>' + entry.time.join(':') + '</td>' +
-            '<td>' + (new Date(entry.date)).toLocaleDateString() + '</td>' +
+            '<td>' + escapeHTML(entry.time.join(':')) + '</td>' +
+            '<td>' + escapeHTML((new Date(entry.date)).toLocaleDateString()) + '</td>' +
             '<td>' + (entry.night ? 'Yes' : 'No') + '</td>' +
-            '<td>' + skillNames + '</td>' +
-            '<td>' + (entry.comment || '—') + '</td>' +
+            '<td>' + escapeHTML(skillNames) + '</td>' +
+            '<td>' + escapeHTML(entry.comment || '—') + '</td>' +
             '</tr>';
     }
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Driving Log</title>' +
@@ -220,8 +218,8 @@ function printLog() {
         '</style></head><body>' +
         '<h1>Driving Log</h1>' +
         '<div class="summary">' +
-        'Total: <strong>' + timePrintLayout(totalHours).join(':') + '</strong> of <strong>' + hours[0] + 'h</strong> required &nbsp;|&nbsp; ' +
-        'Night: <strong>' + timePrintLayout(nightHours).join(':') + '</strong> of <strong>' + hours[1] + 'h</strong> required' +
+        'Total: <strong>' + escapeHTML(timePrintLayout(totalHours).join(':')) + '</strong> of <strong>' + escapeHTML(hours[0]) + 'h</strong> required &nbsp;|&nbsp; ' +
+        'Night: <strong>' + escapeHTML(timePrintLayout(nightHours).join(':')) + '</strong> of <strong>' + escapeHTML(hours[1]) + 'h</strong> required' +
         '</div>' +
         '<button onclick="window.print()">Print / Save as PDF</button>' +
         '<table><thead><tr>' +
@@ -229,20 +227,31 @@ function printLog() {
         '</tr></thead><tbody>' +
         rows +
         '<tr class="totals"><td colspan="5">' +
-        'Total Driving: ' + timePrintLayout(totalHours).join(':') +
-        ' &nbsp;|&nbsp; Total Night Driving: ' + timePrintLayout(nightHours).join(':') +
+        'Total Driving: ' + escapeHTML(timePrintLayout(totalHours).join(':')) +
+        ' &nbsp;|&nbsp; Total Night Driving: ' + escapeHTML(timePrintLayout(nightHours).join(':')) +
         '</td></tr>' +
         '</tbody></table></body></html>';
 
-    var blob = new Blob([html], {type: 'text/html'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'driving-log.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    var printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        snackbar.labelText = 'The driving log could not be opened. Please allow pop-ups and try again.';
+        snackbar.open();
+        return "error";
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function(character) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[character];
+    });
 }
 const DRIVING_TIPS = ["Turn on Do Not Disturb to reduce distractions on the road.", "Try turning off driver assist features to become less dependent on these features.", "Stop driving if you feel tired", "Remember to buckle up!", "Feel free to exit the app. Your timer will stay here.", "Remember, you should look over your shoulder and fully move into a non-protected bike lane before turning right.", "Remember, your car is a wrecking ball on wheels. Control it wisely, safely, and responsibly."];
 function getTotalTime() {
