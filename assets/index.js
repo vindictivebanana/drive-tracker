@@ -3,6 +3,7 @@ let timeStarted;
 let currentTime;
 let currentNight;
 let currentMS;
+let predictedTime;
 class TabManager {
     start() {
         this._switchTabs('start-tab');
@@ -10,7 +11,11 @@ class TabManager {
         document.getElementById('share').hidden = true;
         document.getElementById('closeButton').hidden = false;
         const hour = new Date().getHours();
-        const predictedTime = (hour < 5 || hour >= 16) ? 'night' : 'day';
+        if (hour < 5 || hour >=21) {
+            predictedTime = 'night';
+        } else {
+            predictedTime = 'day';
+        }
 
         if (timeChips.selectedChipIds.indexOf(predictedTime) == -1) {
             document.getElementById(predictedTime).click();
@@ -58,10 +63,11 @@ class TabManager {
         document.getElementById('share').hidden = false;
         document.getElementById('closeButton').hidden = true;
         fabIcon.innerHTML = 'play_arrow';
-        if ((new Date).getHours < 5 || (new Date).getHours > 21) {
-            var predictedTime = 'night';
+        const hour = new Date().getHours();
+        if (hour < 5 || hour > 21) {
+            predictedTime = 'night';
         } else {
-            var predictedTime = 'day';
+            predictedTime = 'day';
         }
         if (timeChips.selectedChipIds.indexOf(predictedTime) == -1) {
             document.getElementById(predictedTime).click();
